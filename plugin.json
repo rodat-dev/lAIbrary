@@ -1,0 +1,15 @@
+{
+  "id": "github-library-finder",
+  "name": "GitHub Library Finder",
+  "description": "AI-powered GitHub library recommendation platform that helps developers discover and evaluate programming libraries through intelligent insights and interactive exploration features",
+  "version": "1.0.0",
+  "author": "Replit",
+  "icon": "assets/icon.png",
+  "view": "src/page.tsx",
+  "process": {
+    "entry": "dist/index.js",
+    "background": true,
+    "args": ["--port", "5000"]
+  },
+  "repository": "https://github.com/replit/github-library-finder"
+}
