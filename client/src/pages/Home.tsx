@@ -14,6 +14,9 @@ export default function Home() {
     example?: string;
   } | null>(null);
 
+  // TODO: Replace with actual user authentication
+  const mockUserId = 1; // Temporary user ID for testing bookmarks
+
   const { data: results, isLoading } = useQuery<LibraryRecommendation[]>({
     queryKey: ['/api/search', searchParams?.language, searchParams?.description, searchParams?.example],
     queryFn: async () => {
@@ -78,7 +81,11 @@ export default function Home() {
 
             {(searchParams || isLoading) && (
               <ScrollArea className="h-[600px] rounded-lg border">
-                <ResultsList results={results} isLoading={isLoading} />
+                <ResultsList 
+                  results={results} 
+                  isLoading={isLoading} 
+                  userId={mockUserId}
+                />
               </ScrollArea>
             )}
           </div>
