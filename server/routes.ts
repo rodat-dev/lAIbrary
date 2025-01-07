@@ -20,6 +20,7 @@ export function registerRoutes(app: Express): Server {
         description?: string; 
         example?: string;
       };
+      console.log(language, description, example);
 
       if (!language || !description) {
         return res.status(400).json({ message: "Missing required parameters" });
@@ -56,7 +57,7 @@ export function registerRoutes(app: Express): Server {
 
       const results = data.items.map((repo) => ({
         name: repo.name,
-        owner: repo.owner.login,
+        owner: repo.owner?.login,
         description: repo.description || "",
         url: repo.html_url,
         stars: repo.stargazers_count,

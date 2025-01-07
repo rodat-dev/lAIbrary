@@ -15,6 +15,19 @@ export default function Home() {
 
   const { data: results, isLoading } = useQuery<LibraryRecommendation[]>({
     queryKey: ['/api/search', searchParams?.language, searchParams?.description, searchParams?.example],
+    queryFn: async () => {
+      if (!searchParams) return [];
+      const params = new URLSearchParams({
+        language: searchParams.language,
+        description: searchParams.description,
+        ...(searchParams.example ? { example: searchParams.example } : {})
+      });
+      const response = await fetch(`/api/search?${params}`);
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
     enabled: !!searchParams,
   });
 
