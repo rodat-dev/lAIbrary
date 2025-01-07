@@ -28,13 +28,12 @@ export function registerRoutes(app: Express): Server {
       // Construct a more focused search query
       const searchTerms = [
         `language:${language}`,
-        description,
+        description.replace(/[^\w\s]/g, ''), // Clean up special characters
         example ? `${example} in:name,description,readme` : "",
-        "stars:>100", // Add minimum stars filter
-        "sort:stars", // Sort by stars
+        "stars:>50", // Lower the stars threshold
       ].filter(Boolean).join(" ");
 
-      console.log(`Searching GitHub with query: ${searchTerms}`);
+      console.log(`[GitHub Search] Query: "${searchTerms}"`);
 
       const { data } = await octokit.search.repos({
         q: searchTerms,
@@ -43,7 +42,13 @@ export function registerRoutes(app: Express): Server {
         per_page: 10,
       });
 
-      console.log(`Found ${data.total_count} repositories`);
+      console.log(`[GitHub Search] Found ${data.total_count} repositories`);
+
+      if (data.items?.length > 0) {
+        console.log(`[GitHub Search] First result: ${data.items[0].full_name}`);
+      } else {
+        console.log('[GitHub Search] No items in response');
+      }
 
       if (data.total_count === 0) {
         return res.json([]);
@@ -62,12 +67,21 @@ export function registerRoutes(app: Express): Server {
 
       res.json(results);
     } catch (error: any) {
-      console.error('GitHub API Error:', error.response?.data || error);
+      console.error('[GitHub Search Error]', {
+        status: error.status,
+        message: error.message,
+        response: error.response?.data,
+        headers: error.response?.headers,
+      });
 
       if (error.status === 403) {
+        const rateLimit = error.response?.headers?.['x-ratelimit-remaining'];
         res.status(403).json({ 
           message: "GitHub API rate limit exceeded",
-          details: error.response?.data
+          details: {
+            rateLimit,
+            ...error.response?.data
+          }
         });
       } else if (error.status === 422) {
         res.status(422).json({ 
