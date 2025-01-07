@@ -11,7 +11,7 @@ type ResultsListProps = {
 
 export function ResultsList({ results, isLoading, userId }: ResultsListProps) {
   // Fetch user's bookmarks if userId is provided
-  const { data: bookmarks } = useQuery({
+  const { data: bookmarks = [] } = useQuery({
     queryKey: ['/api/bookmarks', userId],
     enabled: !!userId,
   });
@@ -40,14 +40,18 @@ export function ResultsList({ results, isLoading, userId }: ResultsListProps) {
 
   return (
     <div className="p-4 space-y-4">
-      {results.map((library) => (
-        <LibraryCard 
-          key={library.url} 
-          library={library} 
-          userId={userId}
-          isBookmarked={bookmarks?.some(b => b.libraryId === library.id)}
-        />
-      ))}
+      {results.map((library) => {
+        const bookmark = bookmarks.find((b: any) => b.libraryId === library.id);
+        return (
+          <LibraryCard 
+            key={library.url} 
+            library={library} 
+            userId={userId}
+            isBookmarked={!!bookmark}
+            bookmarkId={bookmark?.id}
+          />
+        );
+      })}
     </div>
   );
 }

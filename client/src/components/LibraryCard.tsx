@@ -17,26 +17,21 @@ type LibraryCardProps = {
   library: LibraryRecommendation;
   userId?: number;
   isBookmarked?: boolean;
+  bookmarkId?: number;
 };
 
-export function LibraryCard({ library, userId, isBookmarked = false }: LibraryCardProps) {
+export function LibraryCard({ library, userId, isBookmarked = false, bookmarkId }: LibraryCardProps) {
   const { analysis } = library;
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { mutate: toggleBookmark, isLoading } = useMutation({
+  const { mutate: toggleBookmark } = useMutation({
     mutationFn: async () => {
-      if (isBookmarked) {
-        // Find the bookmark ID and delete it
-        const bookmarks = await fetch(`/api/bookmarks?userId=${userId}`).then(res => res.json());
-        const bookmark = bookmarks.find(b => b.libraryId === library.id);
-        if (bookmark) {
-          await fetch(`/api/bookmarks/${bookmark.id}?userId=${userId}`, {
-            method: 'DELETE',
-          });
-        }
+      if (isBookmarked && bookmarkId) {
+        await fetch(`/api/bookmarks/${bookmarkId}?userId=${userId}`, {
+          method: 'DELETE',
+        });
       } else {
-        // Create new bookmark
         await fetch('/api/bookmarks', {
           method: 'POST',
           headers: {
@@ -99,7 +94,6 @@ export function LibraryCard({ library, userId, isBookmarked = false }: LibraryCa
                 <Button
                   variant="ghost"
                   size="icon"
-                  disabled={isLoading}
                   onClick={() => toggleBookmark()}
                   className={isBookmarked ? "text-primary" : "text-muted-foreground"}
                 >

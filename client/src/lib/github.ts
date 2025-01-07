@@ -9,6 +9,7 @@ export interface LibraryAnalysis {
 }
 
 export interface LibraryRecommendation {
+  id?: number;
   name: string;
   owner: string;
   description: string;

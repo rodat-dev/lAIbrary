@@ -43,19 +43,11 @@ export function cleanSearchTerm(term: string): string {
 }
 
 export function buildSearchQuery(language: string, term: string, example?: string): string {
-  const excludeTerms = [
-    "-topic:machine-learning",
-    "-topic:deep-learning",
-    "-topic:artificial-intelligence",
-    "-topic:ai",
-    "-topic:neural-network",
-  ];
 
   return [
     `language:${language}`,
     cleanSearchTerm(term),
     example ? `${example} in:name,description,readme` : "",
     "stars:>50",
-    ...excludeTerms
   ].filter(Boolean).join(" ");
 }
