@@ -33,6 +33,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Initialize routes
+const server = registerRoutes(app);
+
 // Error handling middleware
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const status = err.status || err.statusCode || 500;
@@ -43,9 +46,8 @@ app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-const server = registerRoutes(app);
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, () => {
   console.log(`Plugin server running on port ${PORT}`);
 });
 
