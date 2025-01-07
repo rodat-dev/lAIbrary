@@ -12,7 +12,7 @@
     "background": true,
     "args": ["--port", "5000"]
   },
-  "envVariables": ["OPENAI_API_KEY", "GITHUB_TOKEN", "DATABASE_URL", "PORT"]
+  "envVariables": ["OPENAI_API_KEY", "GITHUB_TOKEN", "DATABASE_URL", "PORT"],
   "repository": "https://github.com/replit/github-library-finder",
   "dependencies": {
     "npm": {
