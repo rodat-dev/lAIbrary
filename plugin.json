@@ -8,6 +8,7 @@
   "view": "src/page.tsx",
   "process": {
     "entry": "dist/index.js",
+    "runtime": "node",
     "background": true,
     "args": ["--port", "5000"]
   },
