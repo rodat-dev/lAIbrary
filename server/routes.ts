@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Octokit } from "@octokit/rest";
 import { analyzeLibrary } from "./lib/aiAnalyzer";
+import { generateSearchTerms, buildSearchQuery } from "./lib/searchEnhancer";
 import { db } from "@db";
 import { bookmarks, libraries } from "@db/schema";
 import { eq, and } from "drizzle-orm";
@@ -89,7 +90,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Existing search route
+  // Enhanced search route
   app.get("/api/search", async (req, res) => {
     try {
       const { language, description, example } = req.query as { 
@@ -102,27 +103,52 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ message: "Missing required parameters" });
       }
 
-      const searchTerms = [
-        `language:${language}`,
-        description.replace(/[^\w\s]/g, ''),
-        example ? `${example} in:name,description,readme` : "",
-        "stars:>50",
-      ].filter(Boolean).join(" ");
+      // Generate multiple search terms using AI
+      const searchTerms = await generateSearchTerms(language, description);
+      console.log(`[Search Terms Generated]`, searchTerms);
 
-      console.log(`[GitHub Search] Query: "${searchTerms}"`);
+      // Run parallel searches for each term
+      const searchPromises = searchTerms.map(async (term) => {
+        const searchQuery = buildSearchQuery(language, term, example);
+        console.log(`[GitHub Search] Query: "${searchQuery}"`);
 
-      const { data } = await octokit.search.repos({
-        q: searchTerms,
-        sort: "stars",
-        order: "desc",
-        per_page: 10,
+        try {
+          const { data } = await octokit.search.repos({
+            q: searchQuery,
+            sort: "stars",
+            order: "desc",
+            per_page: 5, // Reduce per_page since we're doing multiple searches
+          });
+
+          return data.items || [];
+        } catch (error) {
+          console.error(`[GitHub Search Error] Failed query: ${searchQuery}`, error);
+          return [];
+        }
       });
 
-      if (data.total_count === 0) {
+      // Wait for all searches to complete
+      const searchResults = await Promise.all(searchPromises);
+
+      // Merge and deduplicate results
+      const uniqueRepos = new Map();
+      searchResults.flat().forEach((repo) => {
+        if (!uniqueRepos.has(repo.html_url)) {
+          uniqueRepos.set(repo.html_url, repo);
+        }
+      });
+
+      // Convert to array and sort by stars
+      const dedupedResults = Array.from(uniqueRepos.values())
+        .sort((a, b) => b.stargazers_count - a.stargazers_count)
+        .slice(0, 10); // Keep top 10 results
+
+      if (dedupedResults.length === 0) {
         return res.json([]);
       }
 
-      const results = await Promise.all(data.items.map(async (repo) => {
+      // Process repositories and fetch their READMEs
+      const results = await Promise.all(dedupedResults.map(async (repo) => {
         try {
           const readmeResponse = await octokit.repos.getReadme({
             owner: repo.owner!.login,
