@@ -12,7 +12,7 @@ import { Toaster } from "../client/src/components/ui/toaster";
 import { SearchForm } from "../client/src/components/SearchForm";
 
 // Main plugin view component
-export default function PluginView() {
+export default function Page() {
   const [searchParams, setSearchParams] = useState<{
     language: string;
     description: string;
@@ -23,13 +23,18 @@ export default function PluginView() {
   const mockUserId = 1; // Temporary user ID for testing bookmarks
 
   const { data: results, isLoading } = useQuery<LibraryRecommendation[]>({
-    queryKey: ['/api/search', searchParams?.language, searchParams?.description, searchParams?.example],
+    queryKey: [
+      "/api/search",
+      searchParams?.language,
+      searchParams?.description,
+      searchParams?.example,
+    ],
     queryFn: async () => {
       if (!searchParams) return [];
       const params = new URLSearchParams({
         language: searchParams.language,
         description: searchParams.description,
-        ...(searchParams.example ? { example: searchParams.example } : {})
+        ...(searchParams.example ? { example: searchParams.example } : {}),
       });
       const response = await fetch(`/api/search?${params}`);
       if (!response.ok) {
@@ -87,9 +92,9 @@ export default function PluginView() {
 
               {(searchParams || isLoading) && (
                 <ScrollArea className="h-[600px] rounded-lg border">
-                  <ResultsList 
-                    results={results} 
-                    isLoading={isLoading} 
+                  <ResultsList
+                    results={results}
+                    isLoading={isLoading}
                     userId={mockUserId}
                   />
                 </ScrollArea>
