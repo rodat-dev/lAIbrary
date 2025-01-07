@@ -1,3 +1,13 @@
+export interface LibraryAnalysis {
+  isOpenSource: boolean;
+  pricing?: {
+    type: "free" | "paid" | "freemium";
+    startingPrice?: string;
+  };
+  integrationComplexity: number;
+  complexityReason: string;
+}
+
 export interface LibraryRecommendation {
   name: string;
   owner: string;
@@ -7,4 +17,5 @@ export interface LibraryRecommendation {
   forks: number;
   topics: string[];
   updatedAt: string;
+  analysis?: LibraryAnalysis;
 }

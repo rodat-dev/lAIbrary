@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { Octokit } from "@octokit/rest";
+import { analyzeLibrary } from "./lib/aiAnalyzer";
 
 let octokit: Octokit;
 
@@ -55,15 +56,49 @@ export function registerRoutes(app: Express): Server {
         return res.json([]);
       }
 
-      const results = data.items.map((repo) => ({
-        name: repo.name,
-        owner: repo.owner?.login,
-        description: repo.description || "",
-        url: repo.html_url,
-        stars: repo.stargazers_count,
-        forks: repo.forks_count,
-        topics: repo.topics || [],
-        updatedAt: repo.updated_at,
+      // Process repositories and fetch their READMEs
+      const results = await Promise.all(data.items.map(async (repo) => {
+        try {
+          // Fetch README content
+          const readmeResponse = await octokit.repos.getReadme({
+            owner: repo.owner.login,
+            repo: repo.name,
+          });
+
+          const readmeContent = Buffer.from(readmeResponse.data.content, 'base64').toString('utf-8');
+
+          // Analyze repository using AI
+          const analysis = await analyzeLibrary(
+            repo.name,
+            repo.description || "",
+            readmeContent
+          );
+
+          return {
+            name: repo.name,
+            owner: repo.owner.login,
+            description: repo.description || "",
+            url: repo.html_url,
+            stars: repo.stargazers_count,
+            forks: repo.forks_count,
+            topics: repo.topics || [],
+            updatedAt: repo.updated_at,
+            analysis,
+          };
+        } catch (error) {
+          console.error(`[GitHub Analysis Error] Failed to analyze ${repo.full_name}:`, error);
+          // Return repository without analysis if it fails
+          return {
+            name: repo.name,
+            owner: repo.owner.login,
+            description: repo.description || "",
+            url: repo.html_url,
+            stars: repo.stargazers_count,
+            forks: repo.forks_count,
+            topics: repo.topics || [],
+            updatedAt: repo.updated_at,
+          };
+        }
       }));
 
       res.json(results);
