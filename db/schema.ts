@@ -58,7 +58,15 @@ export const searchResults = pgTable("search_results", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Relations
+export const bookmarks = pgTable("bookmarks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  libraryId: integer("library_id").references(() => libraries.id).notNull(),
+  notes: text("notes"),
+  tags: json("tags").$type<string[]>().default([]),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const searchesRelations = relations(searches, ({ many }) => ({
   results: many(searchResults),
 }));
@@ -66,6 +74,7 @@ export const searchesRelations = relations(searches, ({ many }) => ({
 export const usersRelations = relations(users, ({ many }) => ({
   achievements: many(userAchievements),
   searches: many(searches),
+  bookmarks: many(bookmarks),
 }));
 
 export const achievementsRelations = relations(achievements, ({ many }) => ({
@@ -85,6 +94,7 @@ export const userAchievementsRelations = relations(userAchievements, ({ one }) =
 
 export const librariesRelations = relations(libraries, ({ many }) => ({
   searchResults: many(searchResults),
+  bookmarks: many(bookmarks),
 }));
 
 export const searchResultsRelations = relations(searchResults, ({ one }) => ({
@@ -98,7 +108,17 @@ export const searchResultsRelations = relations(searchResults, ({ one }) => ({
   }),
 }));
 
-// Schemas
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+  user: one(users, {
+    fields: [bookmarks.userId],
+    references: [users.id],
+  }),
+  library: one(libraries, {
+    fields: [bookmarks.libraryId],
+    references: [libraries.id],
+  }),
+}));
+
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertSearchSchema = createInsertSchema(searches);
@@ -111,8 +131,9 @@ export const insertAchievementSchema = createInsertSchema(achievements);
 export const selectAchievementSchema = createSelectSchema(achievements);
 export const insertUserAchievementSchema = createInsertSchema(userAchievements);
 export const selectUserAchievementSchema = createSelectSchema(userAchievements);
+export const insertBookmarkSchema = createInsertSchema(bookmarks);
+export const selectBookmarkSchema = createSelectSchema(bookmarks);
 
-// Types
 export type InsertUser = typeof users.$inferInsert;
 export type SelectUser = typeof users.$inferSelect;
 export type InsertSearch = typeof searches.$inferInsert;
@@ -125,3 +146,5 @@ export type InsertAchievement = typeof achievements.$inferInsert;
 export type SelectAchievement = typeof achievements.$inferSelect;
 export type InsertUserAchievement = typeof userAchievements.$inferInsert;
 export type SelectUserAchievement = typeof userAchievements.$inferSelect;
+export type InsertBookmark = typeof bookmarks.$inferInsert;
+export type SelectBookmark = typeof bookmarks.$inferSelect;

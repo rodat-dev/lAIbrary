@@ -1,8 +1,11 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Star, GitFork, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ExternalLink, Star, GitFork, Zap, Bookmark } from "lucide-react";
 import { LibraryRecommendation } from "@/lib/github";
 import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Tooltip,
   TooltipContent,
@@ -12,10 +15,57 @@ import {
 
 type LibraryCardProps = {
   library: LibraryRecommendation;
+  userId?: number;
+  isBookmarked?: boolean;
 };
 
-export function LibraryCard({ library }: LibraryCardProps) {
+export function LibraryCard({ library, userId, isBookmarked = false }: LibraryCardProps) {
   const { analysis } = library;
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { mutate: toggleBookmark, isLoading } = useMutation({
+    mutationFn: async () => {
+      if (isBookmarked) {
+        // Find the bookmark ID and delete it
+        const bookmarks = await fetch(`/api/bookmarks?userId=${userId}`).then(res => res.json());
+        const bookmark = bookmarks.find(b => b.libraryId === library.id);
+        if (bookmark) {
+          await fetch(`/api/bookmarks/${bookmark.id}?userId=${userId}`, {
+            method: 'DELETE',
+          });
+        }
+      } else {
+        // Create new bookmark
+        await fetch('/api/bookmarks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId,
+            libraryId: library.id,
+          }),
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/bookmarks'] });
+      toast({
+        title: isBookmarked ? "Bookmark removed" : "Library bookmarked",
+        description: isBookmarked 
+          ? "The library has been removed from your bookmarks" 
+          : "The library has been added to your bookmarks",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update bookmark. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const getComplexityColor = (level: number) => {
     if (level <= 2) return "bg-green-500";
@@ -44,31 +94,44 @@ export function LibraryCard({ library }: LibraryCardProps) {
                 by {library.owner}
               </p>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <Tooltip>
-                <TooltipTrigger className="flex items-center gap-1">
-                  <Star className="h-4 w-4" />
-                  {library.stars.toLocaleString()}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>GitHub Stars</p>
-                  <p className="text-xs text-muted-foreground">
-                    Indicates project popularity
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger className="flex items-center gap-1">
-                  <GitFork className="h-4 w-4" />
-                  {library.forks.toLocaleString()}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>GitHub Forks</p>
-                  <p className="text-xs text-muted-foreground">
-                    Indicates active development and community involvement
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+            <div className="flex items-center gap-4">
+              {userId && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  disabled={isLoading}
+                  onClick={() => toggleBookmark()}
+                  className={isBookmarked ? "text-primary" : "text-muted-foreground"}
+                >
+                  <Bookmark className="h-4 w-4" />
+                </Button>
+              )}
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <Tooltip>
+                  <TooltipTrigger className="flex items-center gap-1">
+                    <Star className="h-4 w-4" />
+                    {library.stars.toLocaleString()}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>GitHub Stars</p>
+                    <p className="text-xs text-muted-foreground">
+                      Indicates project popularity
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger className="flex items-center gap-1">
+                    <GitFork className="h-4 w-4" />
+                    {library.forks.toLocaleString()}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>GitHub Forks</p>
+                    <p className="text-xs text-muted-foreground">
+                      Indicates active development and community involvement
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             </div>
           </div>
         </CardHeader>

@@ -1,13 +1,21 @@
 import { LibraryCard } from "@/components/LibraryCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LibraryRecommendation } from "@/lib/github";
+import { useQuery } from "@tanstack/react-query";
 
 type ResultsListProps = {
   results?: LibraryRecommendation[];
   isLoading: boolean;
+  userId?: number;
 };
 
-export function ResultsList({ results, isLoading }: ResultsListProps) {
+export function ResultsList({ results, isLoading, userId }: ResultsListProps) {
+  // Fetch user's bookmarks if userId is provided
+  const { data: bookmarks } = useQuery({
+    queryKey: ['/api/bookmarks', userId],
+    enabled: !!userId,
+  });
+
   if (isLoading) {
     return (
       <div className="p-4 space-y-4">
@@ -33,7 +41,12 @@ export function ResultsList({ results, isLoading }: ResultsListProps) {
   return (
     <div className="p-4 space-y-4">
       {results.map((library) => (
-        <LibraryCard key={library.url} library={library} />
+        <LibraryCard 
+          key={library.url} 
+          library={library} 
+          userId={userId}
+          isBookmarked={bookmarks?.some(b => b.libraryId === library.id)}
+        />
       ))}
     </div>
   );
