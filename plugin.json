@@ -11,5 +11,37 @@
     "background": true,
     "args": ["--port", "5000"]
   },
-  "repository": "https://github.com/replit/github-library-finder"
+  "repository": "https://github.com/replit/github-library-finder",
+  "dependencies": {
+    "npm": {
+      "@hookform/resolvers": "^3.9.1",
+      "@octokit/rest": "^21.0.2",
+      "@radix-ui/react-accordion": "^1.2.1",
+      "@radix-ui/react-alert-dialog": "^1.1.2",
+      "@radix-ui/react-avatar": "^1.1.1",
+      "@radix-ui/react-dialog": "^1.1.2",
+      "@radix-ui/react-dropdown-menu": "^2.1.2",
+      "@radix-ui/react-label": "^2.1.0",
+      "@radix-ui/react-progress": "^1.1.0",
+      "@radix-ui/react-scroll-area": "^1.2.0",
+      "@radix-ui/react-tooltip": "^1.1.3",
+      "@tanstack/react-query": "^5.60.5",
+      "class-variance-authority": "^0.7.0",
+      "clsx": "^2.1.1",
+      "drizzle-orm": "^0.38.3",
+      "drizzle-zod": "^0.6.0",
+      "express": "^4.21.2",
+      "lucide-react": "^0.453.0",
+      "openai": "^4.77.3",
+      "react": "^18.3.1",
+      "react-dom": "^18.3.1",
+      "react-hook-form": "^7.53.1",
+      "tailwind-merge": "^2.5.4",
+      "tailwindcss": "^3.4.14",
+      "tailwindcss-animate": "^1.0.7",
+      "wouter": "^3.3.5",
+      "zod": "^3.23.8"
+    },
+    "system": []
+  }
 }
